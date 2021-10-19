@@ -1,0 +1,211 @@
+/* eslint-disable no-await-in-loop */
+import { browser, ExpectedConditions as until } from 'protractor';
+import { appHost, testName } from '@console/internal-integration-tests/protractor.conf';
+import { click, waitForCount } from '@console/shared/src/test-utils/utils';
+import { confirmAction } from '@console/shared/src/test-utils/actions.view';
+import { resourceRows, isLoaded } from '@console/internal-integration-tests/views/crud.view';
+import { clickHorizontalTab } from '@console/internal-integration-tests/views/horizontal-nav.view';
+import { clickNavLink } from '@console/internal-integration-tests/views/sidenav.view';
+import { TAB, diskTabCol, networkTabCol, PAGE_LOAD_TIMEOUT_SECS } from '../utils/consts';
+import { StorageResource, NetworkResource, VirtualMachineTemplateModel } from '../utils/types';
+import * as kubevirtDetailView from '../../views/kubevirtUIResource.view';
+import {
+  vmDetailFlavorEditButton,
+  vmDetailCdEditButton,
+  vmDetailBootOrderEditButton,
+  vmDetailDedicatedResourcesEditButton,
+  vmDetailStatusEditButton,
+  vmDetailNodeSelectorEditButton,
+  vmDetailTolerationsEditButton,
+  vmDetailAffinityEditButton,
+} from '../../views/virtualMachine.view';
+import {
+  activeTab,
+  resourceHorizontalTab,
+  getClusterNamespace,
+  switchClusterNamespace,
+} from '../../views/uiResource.view';
+import * as vmsListView from '../../views/vms.list.view';
+import * as editCD from '../../views/dialogs/editCDView';
+import * as editBootOrder from '../../views/dialogs/editBootOrderView';
+import * as editDedicatedResourcesView from '../../views/dialogs/editDedicatedResourcesView';
+import * as editStatusView from '../../views/dialogs/editStatusView';
+import * as editNodeSelectorView from '../../views/editNodeSelectorView';
+import * as editTolerationsView from '../../views/editTolerationsView';
+import * as editAffinityView from '../../views/editAffinityView';
+import { NetworkInterfaceDialog } from '../dialogs/networkInterfaceDialog';
+import { DiskDialog } from '../dialogs/diskDialog';
+import { UIResource } from './uiResource';
+import * as editFlavor from '../../views/dialogs/editFlavorView';
+import { waitForNoLoaders } from '../../views/wizard.view';
+
+export class KubevirtUIResource extends UIResource {
+  async navigateToListView() {
+    const currentUrl = await browser.getCurrentUrl();
+    const vmsListUrl = (namespace) =>
+      `${appHost}/k8s/${namespace === 'all-namespaces' ? '' : 'ns/'}${namespace}/virtualization`;
+
+    if (![vmsListUrl(testName), vmsListUrl('all-namespaces')].includes(currentUrl)) {
+      try {
+        await clickNavLink(['Workloads', 'Virtualization']);
+        if ((await getClusterNamespace()) !== this.namespace) {
+          await switchClusterNamespace(this.namespace);
+        }
+        await isLoaded();
+      } catch (e) {
+        // clickNavLink may fail in case there is a overlay
+        // Try to navigate using URL
+        await browser.get(vmsListUrl(this.namespace));
+        await isLoaded();
+      }
+    }
+    if (this.model === VirtualMachineTemplateModel) {
+      await click(resourceHorizontalTab(VirtualMachineTemplateModel));
+      await isLoaded();
+    }
+  }
+
+  async navigateToTab(tabName: string) {
+    if ((await this.getResourceTitle()) !== this.name) {
+      await this.navigateToListView();
+      await click(vmsListView.vmLinkByName(this.name));
+      await isLoaded();
+    }
+    if ((await getClusterNamespace()) !== this.namespace) {
+      await switchClusterNamespace(this.namespace);
+    }
+
+    if ((await activeTab.getText()) !== tabName) {
+      await clickHorizontalTab(tabName);
+      await isLoaded();
+    }
+  }
+
+  async navigateToDetail() {
+    await this.navigateToTab(TAB.Details);
+    await isLoaded();
+  }
+
+  async navigateToOverview() {
+    await this.navigateToTab(TAB.Overview);
+    await isLoaded();
+  }
+
+  async navigateToConsoles() {
+    await this.navigateToTab(TAB.Console);
+    await isLoaded();
+  }
+
+  async navigateToEnvironment() {
+    await this.navigateToTab(TAB.Environment);
+    await isLoaded();
+  }
+
+  async getAttachedDisks(): Promise<StorageResource[]> {
+    await this.navigateToTab(TAB.Disks);
+    const rows = await kubevirtDetailView.tableRows();
+    return rows.map((line) => {
+      const cols = line.split(/\t/);
+      return {
+        name: cols[diskTabCol.name],
+        size: cols[diskTabCol.size].slice(0, -4),
+        interface: cols[diskTabCol.interface],
+        storageClass: cols[diskTabCol.storageClass],
+      };
+    });
+  }
+
+  async getAttachedNICs(): Promise<NetworkResource[]> {
+    await this.navigateToTab(TAB.NetworkInterfaces);
+    const rows = await kubevirtDetailView.tableRows();
+    return rows.map((line) => {
+      const cols = line.split(/\t/);
+      return {
+        name: cols[networkTabCol.name],
+        model: cols[networkTabCol.model],
+        mac: cols[networkTabCol.mac],
+        network: cols[networkTabCol.network],
+        type: cols[networkTabCol.type],
+      };
+    });
+  }
+
+  async addDisk(disk: StorageResource) {
+    await this.navigateToTab(TAB.Disks);
+    const count = await resourceRows.count();
+    await click(kubevirtDetailView.createDiskButton);
+    const dialog = new DiskDialog();
+    await dialog.create(disk);
+    await browser.wait(until.and(waitForCount(resourceRows, count + 1)), PAGE_LOAD_TIMEOUT_SECS);
+  }
+
+  async removeDisk(name: string) {
+    await this.navigateToTab(TAB.Disks);
+    const count = await resourceRows.count();
+    await kubevirtDetailView.selectKebabOption(name, 'Delete');
+    await confirmAction();
+    await browser.wait(until.and(waitForCount(resourceRows, count - 1)), PAGE_LOAD_TIMEOUT_SECS);
+  }
+
+  async addNIC(nic: NetworkResource) {
+    await this.navigateToTab(TAB.NetworkInterfaces);
+    const count = await resourceRows.count();
+    await click(kubevirtDetailView.createNICButton);
+    const dialog = new NetworkInterfaceDialog();
+    await dialog.create(nic);
+    await browser.wait(until.and(waitForCount(resourceRows, count + 1)), PAGE_LOAD_TIMEOUT_SECS);
+  }
+
+  async removeNIC(name: string) {
+    await this.navigateToTab(TAB.NetworkInterfaces);
+    const count = await resourceRows.count();
+    await kubevirtDetailView.selectKebabOption(name, 'Delete');
+    await confirmAction();
+    await browser.wait(until.and(waitForCount(resourceRows, count - 1)), PAGE_LOAD_TIMEOUT_SECS);
+  }
+
+  async modalEditFlavor() {
+    await click(vmDetailFlavorEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editFlavor.modalTitle()));
+    await waitForNoLoaders();
+  }
+
+  async modalEditCDRoms() {
+    await click(vmDetailCdEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editCD.modalTitle));
+    await isLoaded();
+  }
+
+  async modalEditBootOrder() {
+    await click(vmDetailBootOrderEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editBootOrder.bootOrderDialog));
+    await isLoaded();
+  }
+
+  async modalEditDedicatedResources() {
+    await click(vmDetailDedicatedResourcesEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editDedicatedResourcesView.guaranteedPolicyCheckbox));
+    await isLoaded();
+  }
+
+  async modalEditStatus() {
+    await click(vmDetailStatusEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editStatusView.unpauseVMDialog));
+    await isLoaded();
+  }
+
+  async modalEditNodeSelector() {
+    await click(vmDetailNodeSelectorEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editNodeSelectorView.modalTitle));
+  }
+
+  async modalEditTolerations() {
+    await click(vmDetailTolerationsEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editTolerationsView.modalTitle));
+  }
+
+  async modalEditAffinity() {
+    await click(vmDetailAffinityEditButton(this.namespace, this.name));
+    await browser.wait(until.presenceOf(editAffinityView.modalTitle));
+  }
+}

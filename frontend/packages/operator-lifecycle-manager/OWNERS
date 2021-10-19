@@ -1,0 +1,10 @@
+reviewers:
+  - galletti94
+  - jeff-phillips-18
+  - SamiSousa
+  - spadgett
+approvers:
+  - jeff-phillips-18
+  - spadgett
+labels:
+  - component/olm

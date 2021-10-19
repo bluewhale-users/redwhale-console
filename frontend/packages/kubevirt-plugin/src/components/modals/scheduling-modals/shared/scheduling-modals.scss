@@ -1,0 +1,13 @@
+.scheduling-modals__add-btn {
+  padding: var(--pf-global--spacer--xl);
+}
+
+.scheduling-modals__desc-container {
+  display: flex;
+  flex-direction: column;
+  margin-bottom: var(--pf-global--spacer--md);
+
+  .scheduling-modals__desc {
+    color: var(--pf-global--Color--200);
+  }
+}

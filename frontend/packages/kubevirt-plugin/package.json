@@ -1,0 +1,27 @@
+{
+  "name": "@console/kubevirt-plugin",
+  "version": "0.0.0-fixed",
+  "description": "Kubevirt - Virtual machines addon for Kubernetes",
+  "private": true,
+  "scripts": {
+    "lint": "yarn --cwd ../.. eslint packages/kubevirt-plugin"
+  },
+  "dependencies": {
+    "@console/internal": "0.0.0-fixed",
+    "@console/plugin-sdk": "0.0.0-fixed",
+    "@console/shared": "0.0.0-fixed",
+    "@console/dev-console": "0.0.0-fixed",
+    "@patternfly/react-console": "1.x"
+  },
+  "consolePlugin": {
+    "entry": "src/plugin.tsx",
+    "integrationTestSuites": {
+      "kubevirt": [
+        "integration-tests/tests/*.scenario.ts"
+      ],
+      "kubevirt-v2v": [
+        "integration-tests/v2v/*.scenario.ts"
+      ]
+    }
+  }
+}

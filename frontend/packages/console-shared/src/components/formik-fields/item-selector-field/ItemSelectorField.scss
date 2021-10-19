@@ -1,0 +1,13 @@
+.odc-item-selector-field {
+    display: inline-flex;
+    flex-direction: column;
+    flex-flow: wrap;
+    background: var(--pf-global--Color--light-200);
+    padding: 4px;
+  
+    &__success-icon {
+      color: var(--pf-global--success-color--200);
+      font-size: var(--pf-global--FontSize--md);
+      margin-left: var(--pf-global--spacer--lg);
+    }
+  }

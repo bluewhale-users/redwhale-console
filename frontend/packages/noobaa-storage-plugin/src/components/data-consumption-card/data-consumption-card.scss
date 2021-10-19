@@ -1,0 +1,22 @@
+.nb-data-consumption-card__dropdown {
+  display: flex;
+}
+
+.nb-data-consumption-card__dropdown-item {
+  margin-right: 0.4em;
+}
+
+.nb-data-consumption-card__chart-label {
+  margin-top: var(--pf-global--spacer--md);
+}
+
+.nb-data-consumption-card__chart-skeleton {
+  margin-top: var(--pf-global--spacer--md);
+  margin-bottom: var(--pf-global--spacer--md);
+  width: 50%;
+}
+
+.nb-data-consumption-card__chart-legend-skeleton {
+  margin-top: var(--pf-global--spacer--md);
+  width: 80%;
+}

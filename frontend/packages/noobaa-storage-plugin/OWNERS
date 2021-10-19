@@ -1,0 +1,15 @@
+reviewers:
+  - a2batic
+  - afreen23
+  - bipuladh
+  - cloudbehl
+  - gnehapk
+  - rawagner
+approvers:
+  - afreen23
+  - bipuladh
+  - cloudbehl
+  - gnehapk
+  - rawagner
+labels:
+  - component/noobaa

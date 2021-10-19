@@ -1,0 +1,25 @@
+.pf-c-about-modal-box {
+  dt {
+    color: var(--pf-global--color--100);
+    font-size: var(--pf-c-content--FontSize);
+    margin-bottom: var(--pf-global--spacer--md);
+    text-transform: none;
+  }
+  dd {
+    margin-bottom: var(--pf-global--spacer--md);
+  }
+  p {
+    color: var(--pf-global--color--100);
+    margin-bottom: var(--pf-global--spacer--xl);
+  }
+}
+
+.co-about-modal__alert {
+  margin-bottom: var(--pf-global--spacer--xl);
+}
+
+// Temp fix until https://github.com/patternfly/patternfly-next/issues/2447 is fixed upstream
+.pf-c-backdrop {
+  backdrop-filter: none !important;
+  -webkit-backdrop-filter: none !important; // so Safari is consistent with Chrome
+}
